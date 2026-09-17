@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloraScan AI — Plant Leaf Disease Diagnosis & Pathology</title>
+    <meta name="description" content="AI-powered plant leaf disease detection and confidence analysis using deep learning computer vision.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Subtle Animated Background Mesh -->
+    <div class="bg-mesh">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Navigation / Header -->
+    <header class="app-header">
+        <div class="container nav-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12A10 10 0 0 1 12 2z"></path>
+                        <path d="M12 6c-3.314 0-6 2.686-6 6 0 3.314 2.686 6 6 6s6-2.686 6-6c0-3.314-2.686-6-6-6z"></path>
+                        <path d="M12 12v6"></path>
+                        <path d="M9 15h6"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">FloraScan <span class="gradient-text">AI</span></h1>
+                    <p class="brand-tagline">Botanical Pathology & Folia Diagnostics</p>
+                </div>
+            </div>
+            <div class="nav-badges">
+                <span class="badge badge-model">
+                    <span class="pulse-dot"></span> EfficientNet-B0 LiteRT
+                </span>
+                <span class="badge badge-classes">38 Disease Classes</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="container main-layout">
+        <!-- Left Column: Upload & Controls -->
+        <section class="card upload-card" id="upload-section">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-num">1</span>
+                    Upload Foliage Specimen
+                </h2>
+                <p class="card-desc">Take or upload a close-up photo of the affected plant leaf</p>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div class="dropzone" id="dropzone">
+                <input type="file" id="file-input" accept="image/*" class="file-input" hidden>
+                
+                <div class="dropzone-idle" id="dropzone-idle">
+                    <div class="upload-icon-wrapper">
+                        <svg class="upload-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <p class="dropzone-text">
+                        <strong>Drag & drop leaf image here</strong> or <span class="browse-link" id="browse-btn">browse files</span>
+                    </p>
+                    <span class="file-hint">Supports JPEG, PNG, WEBP • Max 16 MB</span>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="preview-container" id="preview-container" style="display: none;">
+                    <img id="preview-image" src="" alt="Specimen Preview" class="preview-img">
+                    <div class="preview-overlay">
+                        <div class="preview-meta">
+                            <span id="preview-name" class="preview-filename">filename.jpg</span>
+                            <span id="preview-size" class="preview-filesize">0 KB</span>
+                        </div>
+                        <button type="button" class="btn-icon remove-btn" id="remove-btn" title="Remove image">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Test Samples -->
+            <div class="samples-group">
+                <div class="samples-header">
+                    <span class="samples-label">Quick Test Presets:</span>
+                </div>
+                <div class="sample-chips">
+                    <button type="button" class="sample-chip" id="sample-blight-btn" data-sample="sample_blight.jpg">
+                        <img src="/static/samples/sample_blight.jpg" alt="Tomato Blight" class="sample-thumb">
+                        <span>Blighted Leaf</span>
+                    </button>
+                    <button type="button" class="sample-chip" id="sample-healthy-btn" data-sample="sample_healthy.jpg">
+                        <img src="/static/samples/sample_healthy.jpg" alt="Healthy Leaf" class="sample-thumb">
+                        <span>Healthy Leaf</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button type="button" class="btn btn-primary" id="analyze-btn" disabled>
+                <span class="btn-icon-prefix">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="11" y1="8" x2="11" y2="14"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                </span>
+                <span id="analyze-btn-text">Diagnose Specimen</span>
+            </button>
+            
+            <!-- History Section -->
+            <div class="history-section" id="history-section" style="display: none;">
+                <h3 class="history-header">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Recent Diagnostics
+                </h3>
+                <div class="history-list" id="history-list">
+                    <!-- Dynamic history items -->
+                </div>
+            </div>
+            
+            <!-- Chat Facility -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    FloraScan Assistant
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-msg ai">Hello! I'm your FloraScan AI assistant. Upload a leaf image or ask me any agricultural question.</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Ask about crop health...">
+                    <button class="chat-send-btn" id="chat-send-btn">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Diagnostic Intelligence Card -->
+        <section class="card results-card" id="results-section">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="step-num">2</span>
+                    Pathology Analysis & Diagnosis
+                </h2>
+                <p class="card-desc" id="status-desc">Deep neural network classification & confidence scoring</p>
+            </div>
+
+            <!-- State 1: Placeholder Empty State -->
+            <div class="state-container" id="empty-state">
+                <div class="empty-graphic">
+                    <div class="radar-scan"></div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="leaf-radar-icon">
+                        <path d="M12 22C6.5 22 2 17.5 2 12c0-5 3.5-9 8.5-9.8C16.5 1.2 22 6.5 22 12c0 5.5-4.5 10-10 10z"></path>
+                        <path d="M2 12s4-1 6-4 3-6 4-6c1 0 2 3 4 6s6 4 6 4"></path>
+                        <path d="M12 2v20"></path>
+                    </svg>
+                </div>
+                <h3 class="state-title">Awaiting Specimen</h3>
+                <p class="state-subtitle">Select or upload a plant leaf image and click <strong>Diagnose Specimen</strong> to inspect for pathogenic damage.</p>
+                <div class="features-checklist">
+                    <div class="feature-item">
+                        <span class="check-icon">✓</span> 38 botanical conditions identified
+                    </div>
+                    <div class="feature-item">
+                        <span class="check-icon">✓</span> Calibrated softmax confidence scoring
+                    </div>
+                    <div class="feature-item">
+                        <span class="check-icon">✓</span> Actionable treatment & prevention protocols
+                    </div>
+                </div>
+            </div>
+
+            <!-- State 2: Loading Analysis -->
+            <div class="state-container" id="loading-state" style="display: none;">
+                <div class="scanner-box">
+                    <div class="scan-beam"></div>
+                    <div class="spinner-orbit">
+                        <div class="orbit-center"></div>
+                    </div>
+                </div>
+                <h3 class="state-title">Analyzing Foliar Patterns...</h3>
+                <p class="state-subtitle" id="loading-message">Computing tensor convolutions & classifying pathology</p>
+                <div class="loading-progress-bar">
+                    <div class="loading-progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- State 3: Diagnosis Results -->
+            <div class="state-container" id="result-state" style="display: none;">
+                <!-- Primary Diagnosis Banner -->
+                <div class="diagnosis-banner" id="diagnosis-banner">
+                    <div class="diagnosis-main">
+                        <div class="diagnosis-header-row">
+                            <span class="plant-name" id="res-plant-name">Tomato</span>
+                            <span class="severity-pill" id="res-severity-pill">Moderate</span>
+                        </div>
+                        <h3 class="disease-headline" id="res-disease-name">Late Blight</h3>
+                        <p class="raw-class-tag" id="res-raw-class">Tomato___Late_blight</p>
+                    </div>
+
+                    <!-- Confidence Meter Ring -->
+                    <div class="confidence-ring-wrapper">
+                        <svg class="confidence-svg" viewBox="0 0 120 120">
+                            <circle class="circle-bg" cx="60" cy="60" r="50"></circle>
+                            <circle class="circle-progress" id="res-confidence-circle" cx="60" cy="60" r="50"></circle>
+                        </svg>
+                        <div class="confidence-text-container">
+                            <span class="confidence-value" id="res-confidence-val">0%</span>
+                            <span class="confidence-label">Confidence</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Neural Engine Live Telemetry -->
+                <div class="telemetry-bar">
+                    <div class="telemetry-item">
+                        <span class="telemetry-icon">🧠</span>
+                        <span class="telemetry-key">Model:</span>
+                        <strong class="telemetry-val" id="telem-model-file">best_plant__model_float32.tflite</strong>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-icon">⚡</span>
+                        <span class="telemetry-key">Inference Time:</span>
+                        <strong class="telemetry-val" id="telem-latency">0 ms</strong>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-icon">📐</span>
+                        <span class="telemetry-key">Input Tensor:</span>
+                        <strong class="telemetry-val" id="telem-tensor">[1, 224, 224, 3]</strong>
+                    </div>
+                </div>
+
+                <!-- Status Summary Callout -->
+                <div class="status-callout" id="res-status-callout">
+                    <div class="status-icon-wrap" id="res-status-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <div class="status-text-wrap">
+                        <h4 class="status-heading" id="res-status-title">Pathogen Detected</h4>
+                        <p class="status-description" id="res-description">Fungal lesions detected on specimen leaf.</p>
+                    </div>
+                </div>
+
+                <!-- Treatment Guide -->
+                <div class="treatment-box" id="treatment-box">
+                    <div class="treatment-header">
+                        <svg class="treatment-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <h4 class="treatment-title">Recommended Agronomic Protocol</h4>
+                    </div>
+                    <p class="treatment-content" id="res-treatment">Apply organic copper fungicide and isolate specimen.</p>
+                </div>
+                
+                <!-- Personalized LLM Recommendation -->
+                <div class="recommendation-box" id="llm-recommendation-box" style="display: none;">
+                    <div class="recommendation-header">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                        </svg>
+                        AI Agronomist Recommendation
+                    </div>
+                    <div class="recommendation-content" id="llm-recommendation-content">
+                        <!-- Content injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Top Predictions Probability Breakdown -->
+                <div class="top-predictions-card">
+                    <h4 class="breakdown-title">Top 5 Prediction Probabilities</h4>
+                    <div class="predictions-list" id="predictions-list">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Secondary Actions -->
+                <div class="results-actions">
+                    <button type="button" class="btn btn-secondary" id="reset-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                            <path d="M3 3v5h5"></path>
+                        </svg>
+                        Analyze Another Specimen
+                    </button>
+                    <button type="button" class="btn btn-ghost" id="copy-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span id="copy-btn-text">Copy Diagnosis</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Supported Plant Types Bar -->
+    <footer class="app-footer">
+        <div class="container footer-content">
+            <span class="footer-badge">Supported Flora:</span>
+            <div class="flora-tags">
+                <span class="flora-tag">🍎 Apple</span>
+                <span class="flora-tag">🫐 Blueberry</span>
+                <span class="flora-tag">🍒 Cherry</span>
+                <span class="flora-tag">🌽 Corn</span>
+                <span class="flora-tag">🍇 Grape</span>
+                <span class="flora-tag">🍊 Orange</span>
+                <span class="flora-tag">🍑 Peach</span>
+                <span class="flora-tag">🫑 Pepper</span>
+                <span class="flora-tag">🥔 Potato</span>
+                <span class="flora-tag">🍓 Strawberry</span>
+                <span class="flora-tag">🍅 Tomato</span>
+                <span class="flora-tag">🌱 Soybean</span>
+                <span class="flora-tag">🎃 Squash</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

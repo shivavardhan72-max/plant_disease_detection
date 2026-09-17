@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="main-layout" style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 2rem;">
+    <!-- Left Column: Upload & Controls -->
+    <section class="card upload-card" id="upload-section">
+        <div class="card-header">
+            <h2 class="card-title">
+                <span class="step-num">1</span>
+                Upload Foliage Specimen
+            </h2>
+            <p class="card-desc">Take or upload a close-up photo of the affected plant leaf</p>
+        </div>
+
+        <div class="dropzone" id="dropzone">
+            <input type="file" id="file-input" accept="image/*" class="file-input" hidden>
+            <div class="dropzone-idle" id="dropzone-idle">
+                <div class="upload-icon-wrapper">
+                    <svg class="upload-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <p class="dropzone-text">
+                    <strong>Drag & drop leaf image here</strong> or <span class="browse-link" id="browse-btn">browse files</span>
+                </p>
+                <span class="file-hint">Supports JPEG, PNG, WEBP • Max 16 MB</span>
+            </div>
+
+            <div class="preview-container" id="preview-container" style="display: none;">
+                <img id="preview-image" src="" alt="Specimen Preview" class="preview-img">
+                <div class="preview-overlay">
+                    <div class="preview-meta">
+                        <span id="preview-name" class="preview-filename">filename.jpg</span>
+                        <span id="preview-size" class="preview-filesize">0 KB</span>
+                    </div>
+                    <button type="button" class="btn-icon remove-btn" id="remove-btn" title="Remove image">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="samples-group">
+            <div class="samples-header">
+                <span class="samples-label">Quick Test Presets:</span>
+            </div>
+            <div class="sample-chips">
+                <button type="button" class="sample-chip" id="sample-blight-btn" data-sample="sample_blight.jpg">
+                    <img src="{{ url_for('static', filename='samples/sample_blight.jpg') }}" alt="Tomato Blight" class="sample-thumb">
+                    <span>Blighted Leaf</span>
+                </button>
+                <button type="button" class="sample-chip" id="sample-healthy-btn" data-sample="sample_healthy.jpg">
+                    <img src="{{ url_for('static', filename='samples/sample_healthy.jpg') }}" alt="Healthy Leaf" class="sample-thumb">
+                    <span>Healthy Leaf</span>
+                </button>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <input type="checkbox" id="send-email-cb" name="send_email" value="true" checked style="accent-color: var(--primary); width: 1.1rem; height: 1.1rem; cursor: pointer;">
+                <label for="send-email-cb" style="font-size: 0.88rem; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                    ✉️ Auto-email report after diagnosis
+                </label>
+            </div>
+            <div style="margin-left: 1.7rem; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Target: <span style="color: var(--primary-hover); font-family: monospace;">{{ current_user.notification_email or current_user.email }}</span>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="analyze-btn" disabled>
+            <span class="btn-icon-prefix">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+            </span>
+            <span id="analyze-btn-text">Diagnose Specimen</span>
+        </button>
+    </section>
+
+    <!-- Right Column: Results -->
+    <section class="card results-card" id="results-section">
+        <div class="card-header">
+            <h2 class="card-title">
+                <span class="step-num">2</span>
+                Pathology Analysis & Diagnosis
+            </h2>
+            <p class="card-desc" id="status-desc">Deep neural network classification & confidence scoring</p>
+        </div>
+
+        <!-- State 1: Placeholder Empty State -->
+        <div class="state-container" id="empty-state">
+            <div class="empty-graphic">
+                <div class="radar-scan"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="leaf-radar-icon">
+                    <path d="M12 22C6.5 22 2 17.5 2 12c0-5 3.5-9 8.5-9.8C16.5 1.2 22 6.5 22 12c0 5.5-4.5 10-10 10z"></path>
+                    <path d="M2 12s4-1 6-4 3-6 4-6c1 0 2 3 4 6s6 4 6 4"></path>
+                    <path d="M12 2v20"></path>
+                </svg>
+            </div>
+            <h3 class="state-title">Awaiting Specimen</h3>
+            <p class="state-subtitle">Select or upload a plant leaf image and click <strong>Diagnose Specimen</strong>.</p>
+        </div>
+
+        <!-- State 2: Loading Analysis -->
+        <div class="state-container" id="loading-state" style="display: none;">
+            <div class="scanner-box">
+                <div class="scan-beam"></div>
+                <div class="spinner-orbit"><div class="orbit-center"></div></div>
+            </div>
+            <h3 class="state-title">Analyzing Foliar Patterns...</h3>
+            <p class="state-subtitle" id="loading-message">Computing tensor convolutions & classifying pathology</p>
+            <div class="loading-progress-bar"><div class="loading-progress-fill"></div></div>
+        </div>
+
+        <!-- State 3: Diagnosis Results -->
+        <div class="state-container" id="result-state" style="display: none;">
+            <div class="diagnosis-banner" id="diagnosis-banner">
+                <div class="diagnosis-main">
+                    <div class="diagnosis-header-row">
+                        <span class="plant-name" id="res-plant-name">Tomato</span>
+                        <span class="severity-pill" id="res-severity-pill">Moderate</span>
+                    </div>
+                    <h3 class="disease-headline" id="res-disease-name">Late Blight</h3>
+                    <p class="raw-class-tag" id="res-raw-class">Tomato___Late_blight</p>
+                </div>
+                <div class="confidence-ring-wrapper">
+                    <svg class="confidence-svg" viewBox="0 0 120 120">
+                        <circle class="circle-bg" cx="60" cy="60" r="50"></circle>
+                        <circle class="circle-progress" id="res-confidence-circle" cx="60" cy="60" r="50"></circle>
+                    </svg>
+                    <div class="confidence-text-container">
+                        <span class="confidence-value" id="res-confidence-val">0%</span>
+                        <span class="confidence-label">Confidence</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-callout" id="res-status-callout">
+                <div class="status-icon-wrap" id="res-status-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="status-text-wrap">
+                    <h4 class="status-heading" id="res-status-title">Pathogen Detected</h4>
+                    <p class="status-description" id="res-description">Fungal lesions detected on specimen leaf.</p>
+                </div>
+            </div>
+
+            <div class="recommendation-box" id="llm-recommendation-box" style="display: none;">
+                <div class="recommendation-header">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                    </svg>
+                    AI Agronomist Recommendation
+                </div>
+                <div class="recommendation-content" id="llm-recommendation-content"></div>
+            </div>
+
+            <div class="treatment-box" style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+                <h4 style="margin: 0 0 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">Recommended Treatment</h4>
+                <p id="res-treatment" style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);">Consult an agricultural specialist.</p>
+            </div>
+
+            <div class="telemetry-section" style="margin-top: 1.5rem; padding: 1rem 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+                <h4 style="margin: 0 0 0.75rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Neural Telemetry</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Model</span>
+                        <span id="telem-model-file" style="font-size: 0.85rem; color: var(--text-secondary);">—</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Latency</span>
+                        <span id="telem-latency" style="font-size: 0.85rem; color: var(--text-secondary);">—</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">Input Tensor</span>
+                        <span id="telem-tensor" style="font-size: 0.85rem; color: var(--text-secondary);">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="predictions-section" style="margin-top: 1.5rem;">
+                <h4 style="margin: 0 0 0.75rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">Top 5 Differential Diagnoses</h4>
+                <div id="predictions-list"></div>
+            </div>
+
+            <div class="results-actions" style="margin-top: 2rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary" id="reset-btn">
+                    Analyze Another Specimen
+                </button>
+                <button type="button" class="btn btn-secondary" id="copy-btn" style="background: rgba(255,255,255,0.06);">
+                    <span id="copy-btn-text">📋 Copy Report</span>
+                </button>
+                <button type="button" class="btn btn-primary" id="send-report-email-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <span id="send-email-btn-text">✉️ Send Email Report</span>
+                </button>
+            </div>
+            
+            <div id="email-status-toast" style="display: none; margin-top: 1.25rem; padding: 0.85rem 1.2rem; border-radius: var(--radius-sm); font-size: 0.88rem; line-height: 1.5; border: 1px solid var(--border-subtle);"></div>
+        </div>
+    </section>
+</div>
+{% endblock %}

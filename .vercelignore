@@ -1,0 +1,29 @@
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Heavy Notebooks & Training Files
+*.ipynb
+.ipynb_checkpoints/
+
+# Tests & Environment
+test_app.py
+.env
+.env.*
+.pytest_cache/
+
+# Git & IDEs
+.git/
+.github/
+.vscode/
+.idea/
+
+# Local uploaded files
+uploads/*

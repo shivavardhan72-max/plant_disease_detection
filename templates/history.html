@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card history-section" style="max-width: 850px; margin: 2rem auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h3 class="history-header" style="margin-bottom: 0;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Recent Foliar Diagnostics (Top 20)
+        </h3>
+        <button type="button" class="btn btn-primary" id="email-latest-btn" style="padding: 0.6rem 1.1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+            <span>✉️ Email Latest Record</span>
+        </button>
+    </div>
+
+    <!-- Notification Toast / Status Box -->
+    <div id="history-email-alert" style="display: none; margin-bottom: 1.25rem; padding: 0.85rem 1.25rem; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.5; border: 1px solid var(--border-subtle);"></div>
+
+    <div class="history-list" id="history-list">
+        <!-- History items populated dynamically by JS -->
+    </div>
+</div>
+{% endblock %}
