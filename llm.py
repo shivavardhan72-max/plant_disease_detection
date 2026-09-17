@@ -6,6 +6,9 @@ from langchain_core.prompts import PromptTemplate
 import db
 import model
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Hugging Face Configuration (Qwen Model on Serverless Inference Router)
 HF_TOKEN = os.environ.get("HUGGINGFACE_API_TOKEN") or os.environ.get("HF_TOKEN")
 HF_MODEL = os.environ.get("HUGGINGFACE_MODEL", "Qwen/Qwen2.5-72B-Instruct")
@@ -32,11 +35,13 @@ def get_ollama():
 
 def _call_hf_qwen(messages: list, max_tokens: int = 350, temperature: float = 0.6) -> str:
     """Invokes Hugging Face Serverless Router using Qwen model."""
-    if not HF_TOKEN:
+    token = os.environ.get("HUGGINGFACE_API_TOKEN") or os.environ.get("HF_TOKEN") or HF_TOKEN
+    model_name = os.environ.get("HUGGINGFACE_MODEL") or HF_MODEL
+    if not token:
         return None
 
     payload = {
-        "model": HF_MODEL,
+        "model": model_name,
         "messages": messages,
         "max_tokens": max_tokens,
         "temperature": temperature
@@ -46,7 +51,7 @@ def _call_hf_qwen(messages: list, max_tokens: int = 350, temperature: float = 0.
         HF_ROUTER_URL,
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {HF_TOKEN}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         },
         method="POST"
